@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Advanced Transaction Manager</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header>
+  <h1>💳 Transaction Manager</h1>
+</header>
+
+<div class="container">
+
+  <!-- Customer Panel -->
+  <div class="panel">
+    <h2>Add Customer</h2>
+    <input id="customerName" placeholder="Customer name">
+    <button onclick="addCustomer()">Add</button>
+
+    <h3>Customers</h3>
+    <select id="customerSelect" onchange="loadTransactions()"></select>
+    <button class="danger" onclick="deleteCustomer()">Delete Customer</button>
+  </div>
+
+  <!-- Transaction Panel -->
+  <div class="panel">
+    <h2>Add Transaction</h2>
+    <input type="date" id="date">
+    <input type="number" id="amount" placeholder="Amount">
+    <select id="type">
+      <option value="credit">Credit</option>
+      <option value="debit">Debit</option>
+    </select>
+    <input id="note" placeholder="Note">
+    <button onclick="addTransaction()">Save Transaction</button>
+  </div>
+
+  <!-- History Panel -->
+  <div class="panel full">
+    <h2>Transaction History</h2>
+    <input id="search" placeholder="Search..." onkeyup="loadTransactions()">
+    <h3 id="balance">Balance: 0</h3>
+    <ul id="transactionList"></ul>
+    <button onclick="exportCSV()">Export to Excel</button>
+  </div>
+
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
