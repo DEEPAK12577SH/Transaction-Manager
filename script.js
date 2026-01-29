@@ -1,8 +1,36 @@
 document.addEventListener("DOMContentLoaded", () => {
 
+  /* ======================
+     CONFIG
+  ====================== */
   const MASTER_PASSWORD = "1234";
-  let data = JSON.parse(localStorage.getItem("data") || "{}");
+  const STORAGE_KEY = "data";
 
+  /* ======================
+     SAFE STORAGE LOAD
+  ====================== */
+  let data = {};
+
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      data = JSON.parse(raw);
+      if (typeof data !== "object" || Array.isArray(data)) {
+        throw new Error("Invalid structure");
+      }
+    }
+  } catch (e) {
+    console.warn("⚠️ Corrupted localStorage cleared");
+    localStorage.removeItem(STORAGE_KEY);
+    data = {};
+  }
+
+  const save = () =>
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+
+  /* ======================
+     DOM
+  ====================== */
   const customerName = document.getElementById("customerName");
   const customers = document.getElementById("customers");
   const dateEl = document.getElementById("date");
@@ -21,8 +49,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   let pendingAction = null;
 
-  const save = () => localStorage.setItem("data", JSON.stringify(data));
-
+  /* ======================
+     MODAL
+  ====================== */
   function openModal(text, action) {
     modalText.textContent = text;
     passwordInput.value = "";
@@ -47,9 +76,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
   document.getElementById("cancelBtn").onclick = closeModal;
 
+  /* ======================
+     CUSTOMER
+  ====================== */
   document.getElementById("addCustomer").onclick = () => {
     const name = customerName.value.trim();
-    if (!name || data[name]) return alert("Invalid customer");
+    if (!name || data[name]) return alert("Invalid or duplicate customer");
     data[name] = [];
     save();
     customers.add(new Option(name, name));
@@ -64,22 +96,25 @@ document.addEventListener("DOMContentLoaded", () => {
     openModal(`Delete customer "${c}" permanently?`, () => {
       delete data[c];
       save();
-      customers.querySelector(`option[value="${c}"]`).remove();
+      customers.querySelector(`option[value="${c}"]`)?.remove();
       customers.value = "";
       render();
     });
   };
 
+  /* ======================
+     TRANSACTIONS
+  ====================== */
   document.getElementById("addTxn").onclick = () => {
     const c = customers.value;
     if (!c) return alert("Select customer");
 
     data[c].push({
-      id: Date.now(),
-      date: dateEl.value || new Date().toISOString().split("T")[0],
+      id: Date.now().toString(),
+      date: dateEl.value || new Date().toISOString().slice(0, 10),
       amount: Number(amount.value),
       type: type.value,
-      note: note.value
+      note: note.value || ""
     });
 
     save();
@@ -87,34 +122,36 @@ document.addEventListener("DOMContentLoaded", () => {
     render();
   };
 
+  /* ======================
+     RENDER
+  ====================== */
   function render() {
     const c = customers.value;
     list.innerHTML = "";
-    if (!c) return;
+    if (!c || !Array.isArray(data[c])) return;
 
     let balance = 0, credit = 0, debit = 0;
     const filter = searchEl.value.toLowerCase();
 
-    // SORT BY DATE (latest first)
-    const txns = [...data[c]].sort(
+    const sorted = [...data[c]].sort(
       (a, b) => new Date(b.date) - new Date(a.date)
     );
 
-    txns.forEach(txn => {
+    sorted.forEach(txn => {
       if (!txn.note.toLowerCase().includes(filter)) return;
 
       balance += txn.type === "credit" ? txn.amount : -txn.amount;
       txn.type === "credit" ? credit += txn.amount : debit += txn.amount;
 
       const li = document.createElement("li");
-      li.innerHTML = `
-        <span class="${txn.type}">
-          ${txn.date} | ${txn.type}: ${txn.amount} (${txn.note})
-        </span>
-        <button>❌</button>
-      `;
 
-      li.querySelector("button").onclick = () => {
+      const span = document.createElement("span");
+      span.className = txn.type;
+      span.textContent = `${txn.date} | ${txn.type}: ${txn.amount} (${txn.note})`;
+
+      const btn = document.createElement("button");
+      btn.textContent = "❌";
+      btn.onclick = () => {
         openModal("Delete this transaction?", () => {
           data[c] = data[c].filter(t => t.id !== txn.id);
           save();
@@ -122,6 +159,8 @@ document.addEventListener("DOMContentLoaded", () => {
         });
       };
 
+      li.appendChild(span);
+      li.appendChild(btn);
       list.appendChild(li);
     });
 
@@ -129,43 +168,9 @@ document.addEventListener("DOMContentLoaded", () => {
     summaryEl.textContent = `Credit: ${credit} | Debit: ${debit}`;
   }
 
-  // EXPORT PDF
-  document.getElementById("exportPdf").onclick = () => {
-    const c = customers.value;
-    if (!c) return alert("Select customer");
-
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
-
-    doc.setFontSize(16);
-    doc.text(`Transactions - ${c}`, 14, 15);
-
-    let credit = 0, debit = 0;
-
-    const rows = data[c]
-      .sort((a,b)=> new Date(a.date) - new Date(b.date))
-      .map(t => {
-        t.type === "credit" ? credit += t.amount : debit += t.amount;
-        return [t.date, t.type, t.amount, t.note];
-      });
-
-    doc.autoTable({
-      startY: 25,
-      head: [["Date", "Type", "Amount", "Note"]],
-      body: rows,
-      headStyles: { fillColor: [37, 99, 235] },
-      alternateRowStyles: { fillColor: [235, 240, 255] }
-    });
-
-    doc.text(
-      `Total Credit: ${credit} | Total Debit: ${debit} | Balance: ${credit - debit}`,
-      14,
-      doc.lastAutoTable.finalY + 10
-    );
-
-    doc.save(`${c}_transactions.pdf`);
-  };
-
+  /* ======================
+     INIT
+  ====================== */
   Object.keys(data).forEach(c => customers.add(new Option(c, c)));
   customers.onchange = render;
   searchEl.oninput = render;
