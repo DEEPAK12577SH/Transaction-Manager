@@ -1,115 +1,339 @@
+/* =====================================================
+   DESIGN SYSTEM
+===================================================== */
+:root {
+  --primary: #2563eb;
+  --primary-soft: rgba(37,99,235,0.15);
+  --primary-dark: #1e40af;
+
+  --success: #16a34a;
+  --danger: #fa2424;
+
+  --bg-main: linear-gradient(180deg, #eef2ff 0%, #f8fafc 100%);
+  --glass: rgba(255,255,255,0.85);
+
+  --text-main: #0f172a;
+  --text-muted: #64748b;
+
+  --border-soft: rgba(15,23,42,0.08);
+
+  --radius-lg: 18px;
+  --radius-md: 14px;
+  --radius-sm: 10px;
+}
+
+/* =====================================================
+   RESET
+===================================================== */
 * {
   box-sizing: border-box;
-  font-family: "Segoe UI", sans-serif;
+  margin: 0;
+  padding: 0;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
 }
 
 body {
-  background: linear-gradient(135deg, #eef2ff, #f8fafc);
-  padding: 20px;
+  background: var(--bg-main);
+  color: var(--text-main);
+  padding: 14px;
+  min-height: 100vh;
 }
 
+/* =====================================================
+   APP SHELL
+===================================================== */
 .app {
-  max-width: 620px;
+  max-width: 760px;
   margin: auto;
+  animation: fadeIn 0.35s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 h1 {
   text-align: center;
-  color: #1e3a8a;
-  margin-bottom: 25px;
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--primary-dark);
+  margin-bottom: 26px;
+  letter-spacing: 0.4px;
 }
 
+/* =====================================================
+   CARD – GLASS DEPTH
+===================================================== */
 .card {
-  background: white;
+  background: var(--glass);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
   padding: 20px;
-  margin-bottom: 20px;
-  border-radius: 14px;
-  box-shadow: 0 12px 28px rgba(0,0,0,0.08);
+  margin-bottom: 18px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-soft);
+  box-shadow:
+    0 20px 45px rgba(15,23,42,0.12),
+    inset 0 1px 0 rgba(255,255,255,0.65);
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
 }
 
-input, select {
+.card:hover {
+  transform: translateY(-3px);
+  box-shadow:
+    0 28px 65px rgba(15,23,42,0.18),
+    inset 0 1px 0 rgba(255,255,255,0.7);
+}
+
+/* =====================================================
+   INPUTS
+===================================================== */
+input,
+select {
   width: 100%;
-  padding: 10px;
-  margin-top: 10px;
-  border-radius: 8px;
-  border: 1px solid #c7d2fe;
+  padding: 13px 15px;
+  margin-top: 12px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-soft);
+  background: rgba(255,255,255,0.95);
+  font-size: 0.95rem;
+  color: var(--text-main);
+  transition: border 0.15s ease, box-shadow 0.15s ease;
 }
 
+input::placeholder {
+  color: var(--text-muted);
+}
+
+input:focus,
+select:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 4px var(--primary-soft);
+}
+
+/* =====================================================
+   BUTTONS – ELEVATED
+===================================================== */
 button {
   width: 100%;
-  padding: 10px;
-  margin-top: 12px;
-  border-radius: 8px;
+  padding: 13px;
+  margin-top: 16px;
+  border-radius: var(--radius-md);
   border: none;
-  font-weight: bold;
+  font-weight: 600;
+  font-size: 0.95rem;
   color: white;
-  background: linear-gradient(90deg, #2563eb, #3b82f6);
+  background: linear-gradient(180deg, #3b82f6, #2563eb);
   cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition:
+    transform 0.14s ease,
+    box-shadow 0.14s ease,
+    opacity 0.14s;
+}
+
+button::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    120deg,
+    transparent 30%,
+    rgba(255,255,255,0.35),
+    transparent 70%
+  );
+  opacity: 0;
+  transition: opacity 0.25s;
+}
+
+button:hover::after {
+  opacity: 1;
+}
+
+button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 26px rgba(37,99,235,0.45);
+}
+
+button:active {
+  transform: translateY(0);
+  box-shadow: none;
 }
 
 button.danger {
-  background: linear-gradient(90deg, #dc2626, #ef4444);
+  background: linear-gradient(180deg, #fc2020, #dc2626);
 }
 
+button.danger:hover {
+  box-shadow: 0 12px 26px rgba(220,38,38,0.45);
+}
+
+/* =====================================================
+   TRANSACTION LIST
+===================================================== */
 ul {
   list-style: none;
-  margin-top: 10px;
-  max-height: 260px;
+  margin-top: 14px;
+  max-height: 300px;
   overflow-y: auto;
+  padding-right: 4px;
 }
 
 li {
-  background: #f1f5f9;
-  padding: 8px 12px;
-  margin-bottom: 6px;
-  border-radius: 8px;
+  background: rgba(255,255,255,0.85);
+  padding: 12px 14px;
+  margin-bottom: 10px;
+  border-radius: var(--radius-md);
   display: flex;
   justify-content: space-between;
   align-items: center;
+  border: 1px solid var(--border-soft);
+  transition: background 0.15s ease, transform 0.15s ease;
 }
 
-.credit { color: #16a34a; font-weight: bold; }
-.debit { color: #dc2626; font-weight: bold; }
+li:hover {
+  background: rgba(255,255,255,0.95);
+  transform: translateX(2px);
+}
+
+li span {
+  font-size: 0.7rem;
+  line-height: 1.30;
+}
+
+.credit {
+  color: var(--success);
+  font-weight: 600;
+}
+
+.debit {
+  color: var(--danger);
+  font-weight: 600;
+}
 
 li button {
   width: auto;
-  padding: 4px 8px;
-  background: #ef4444;
-  border-radius: 6px;
+  padding: 6px 6px;
+  font-size: 0.6rem;
+  border-radius: 10px;
+
+  background: linear-gradient(180deg, #fc5421, #fc0808);
 }
 
-/* MODAL */
+/* ====================================================
+   SUMMARY
+===================================================== */
+#balance {
+  margin-top: 12px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--primary-dark);
+}
+
+#summary {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+/* =====================================================
+   MODAL – PREMIUM
+===================================================== */
 .modal {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.45);
+  background: rgba(15,23,42,0.5);
   display: flex;
   justify-content: center;
   align-items: center;
+  backdrop-filter: blur(10px);
+  z-index: 999;
 }
 
-.hidden { display: none; }
+.hidden {
+  display: none;
+}
 
 .modal-box {
-  background: white;
-  padding: 25px;
-  width: 90%;
-  max-width: 360px;
-  border-radius: 16px;
+  background: rgba(255,255,255,0.95);
+  padding: 28px;
+  width: 94%;
+  max-width: 400px;
+  border-radius: 22px;
+  box-shadow: 0 35px 80px rgba(0,0,0,0.45);
+  animation: modalIn 0.25s ease;
+}
+
+@keyframes modalIn {
+  from { opacity: 0; transform: scale(0.92); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.modal-box h3 {
+  text-align: center;
+  font-size: 1.3rem;
+  margin-bottom: 6px;
+  color: var(--primary-dark);
+}
+
+.modal-box p {
+  text-align: center;
+  font-size: 0.9rem;
+  color: var(--text-muted);
 }
 
 .modal-actions {
   display: flex;
-  gap: 10px;
-  margin-top: 15px;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.modal-actions button {
+  flex: 1;
 }
 
 .cancel {
-  background: #9ca3af;
+  background: linear-gradient(180deg, #9ca3af, #6b7280);
 }
 
 #errorMsg {
-  color: #dc2626;
   text-align: center;
-  margin-top: 10px;
+  font-size: 0.85rem;
+  color: var(--danger);
+  margin-top: 12px;
+}
+
+/* =====================================================
+   MOBILE FIRST POLISH
+===================================================== */
+@media (max-width: 480px) {
+  h1 {
+    font-size: 1.45rem;
+  }
+
+  li {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  li button {
+    align-self: flex-end;
+  }
+}
+
+/* =====================================================
+   DESKTOP ENHANCEMENTS
+===================================================== */
+@media (min-width: 900px) {
+  body {
+    padding: 36px;
+  }
+
+  .card {
+    padding: 24px;
+  }
 }
