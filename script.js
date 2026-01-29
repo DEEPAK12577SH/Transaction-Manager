@@ -1,108 +1,172 @@
-let data = JSON.parse(localStorage.getItem("data")) || {};
+document.addEventListener("DOMContentLoaded", () => {
 
-function save() {
-  localStorage.setItem("data", JSON.stringify(data));
-}
+  const MASTER_PASSWORD = "1234";
+  let data = JSON.parse(localStorage.getItem("data") || "{}");
 
-function addCustomer() {
-  let name = customerName.value.trim();
-  if (!name) return alert("Enter name");
-  if (data[name]) return alert("Customer exists");
+  const customerName = document.getElementById("customerName");
+  const customers = document.getElementById("customers");
+  const dateEl = document.getElementById("date");
+  const amount = document.getElementById("amount");
+  const type = document.getElementById("type");
+  const note = document.getElementById("note");
+  const list = document.getElementById("list");
+  const balanceEl = document.getElementById("balance");
+  const summaryEl = document.getElementById("summary");
+  const searchEl = document.getElementById("search");
 
-  data[name] = [];
-  save();
-  customerName.value = "";
-  updateCustomers();
-}
+  const modal = document.getElementById("passwordModal");
+  const passwordInput = document.getElementById("passwordInput");
+  const modalText = document.getElementById("modalText");
+  const errorMsg = document.getElementById("errorMsg");
 
-function updateCustomers() {
-  customerSelect.innerHTML = "";
-  Object.keys(data).forEach(c => {
-    let o = document.createElement("option");
-    o.value = c;
-    o.textContent = c;
-    customerSelect.appendChild(o);
-  });
-  loadTransactions();
-}
+  let pendingAction = null;
 
-function deleteCustomer() {
-  let c = customerSelect.value;
-  if (!c) return;
-  if (confirm("Delete customer?")) {
-    delete data[c];
-    save();
-    updateCustomers();
+  const save = () => localStorage.setItem("data", JSON.stringify(data));
+
+  function openModal(text, action) {
+    modalText.textContent = text;
+    passwordInput.value = "";
+    errorMsg.textContent = "";
+    modal.classList.remove("hidden");
+    pendingAction = action;
   }
-}
 
-function addTransaction() {
-  let c = customerSelect.value;
-  if (!c) return alert("Select customer");
+  function closeModal() {
+    modal.classList.add("hidden");
+    pendingAction = null;
+  }
 
-  let t = {
-    date: date.value,
-    amount: Number(amount.value),
-    type: type.value,
-    note: note.value
+  document.getElementById("confirmBtn").onclick = () => {
+    if (passwordInput.value !== MASTER_PASSWORD) {
+      errorMsg.textContent = "❌ Incorrect password";
+      return;
+    }
+    pendingAction && pendingAction();
+    closeModal();
   };
 
-  data[c].push(t);
-  save();
-  amount.value = note.value = "";
-  loadTransactions();
-}
+  document.getElementById("cancelBtn").onclick = closeModal;
 
-function loadTransactions() {
-  let c = customerSelect.value;
-  transactionList.innerHTML = "";
-  if (!c) return;
+  document.getElementById("addCustomer").onclick = () => {
+    const name = customerName.value.trim();
+    if (!name || data[name]) return alert("Invalid customer");
+    data[name] = [];
+    save();
+    customers.add(new Option(name, name));
+    customers.value = name;
+    customerName.value = "";
+    render();
+  };
 
-  let searchText = search.value.toLowerCase();
-  let balance = 0;
+  document.getElementById("deleteCustomer").onclick = () => {
+    const c = customers.value;
+    if (!c) return;
+    openModal(`Delete customer "${c}" permanently?`, () => {
+      delete data[c];
+      save();
+      customers.querySelector(`option[value="${c}"]`).remove();
+      customers.value = "";
+      render();
+    });
+  };
 
-  data[c].forEach((t, i) => {
-    if (!t.note.toLowerCase().includes(searchText)) return;
+  document.getElementById("addTxn").onclick = () => {
+    const c = customers.value;
+    if (!c) return alert("Select customer");
 
-    balance += t.type === "credit" ? t.amount : -t.amount;
+    data[c].push({
+      id: Date.now(),
+      date: dateEl.value || new Date().toISOString().split("T")[0],
+      amount: Number(amount.value),
+      type: type.value,
+      note: note.value
+    });
 
-    let li = document.createElement("li");
-    li.innerHTML = `
-      <span class="${t.type}">
-        ${t.date} | ${t.type.toUpperCase()} | ${t.amount} | ${t.note}
-      </span>
-      <span class="actions">
-        <button onclick="deleteTransaction(${i})">❌</button>
-      </span>
-    `;
-    transactionList.appendChild(li);
-  });
+    save();
+    amount.value = note.value = "";
+    render();
+  };
 
-  balanceEl = document.getElementById("balance");
-  balanceEl.textContent = "Balance: " + balance;
-}
+  function render() {
+    const c = customers.value;
+    list.innerHTML = "";
+    if (!c) return;
 
-function deleteTransaction(i) {
-  let c = customerSelect.value;
-  data[c].splice(i, 1);
-  save();
-  loadTransactions();
-}
+    let balance = 0, credit = 0, debit = 0;
+    const filter = searchEl.value.toLowerCase();
 
-function exportCSV() {
-  let c = customerSelect.value;
-  if (!c) return;
+    // SORT BY DATE (latest first)
+    const txns = [...data[c]].sort(
+      (a, b) => new Date(b.date) - new Date(a.date)
+    );
 
-  let csv = "Date,Type,Amount,Note\n";
-  data[c].forEach(t => {
-    csv += `${t.date},${t.type},${t.amount},${t.note}\n`;
-  });
+    txns.forEach(txn => {
+      if (!txn.note.toLowerCase().includes(filter)) return;
 
-  let blob = new Blob([csv], { type: "text/csv" });
-  let a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = c + "_transactions.csv";
-  a.click();
-}
+      balance += txn.type === "credit" ? txn.amount : -txn.amount;
+      txn.type === "credit" ? credit += txn.amount : debit += txn.amount;
 
-updateCustomers();
+      const li = document.createElement("li");
+      li.innerHTML = `
+        <span class="${txn.type}">
+          ${txn.date} | ${txn.type}: ${txn.amount} (${txn.note})
+        </span>
+        <button>❌</button>
+      `;
+
+      li.querySelector("button").onclick = () => {
+        openModal("Delete this transaction?", () => {
+          data[c] = data[c].filter(t => t.id !== txn.id);
+          save();
+          render();
+        });
+      };
+
+      list.appendChild(li);
+    });
+
+    balanceEl.textContent = "Balance: " + balance;
+    summaryEl.textContent = `Credit: ${credit} | Debit: ${debit}`;
+  }
+
+  // EXPORT PDF
+  document.getElementById("exportPdf").onclick = () => {
+    const c = customers.value;
+    if (!c) return alert("Select customer");
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+
+    doc.setFontSize(16);
+    doc.text(`Transactions - ${c}`, 14, 15);
+
+    let credit = 0, debit = 0;
+
+    const rows = data[c]
+      .sort((a,b)=> new Date(a.date) - new Date(b.date))
+      .map(t => {
+        t.type === "credit" ? credit += t.amount : debit += t.amount;
+        return [t.date, t.type, t.amount, t.note];
+      });
+
+    doc.autoTable({
+      startY: 25,
+      head: [["Date", "Type", "Amount", "Note"]],
+      body: rows,
+      headStyles: { fillColor: [37, 99, 235] },
+      alternateRowStyles: { fillColor: [235, 240, 255] }
+    });
+
+    doc.text(
+      `Total Credit: ${credit} | Total Debit: ${debit} | Balance: ${credit - debit}`,
+      14,
+      doc.lastAutoTable.finalY + 10
+    );
+
+    doc.save(`${c}_transactions.pdf`);
+  };
+
+  Object.keys(data).forEach(c => customers.add(new Option(c, c)));
+  customers.onchange = render;
+  searchEl.oninput = render;
+});
