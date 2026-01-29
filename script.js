@@ -2,7 +2,7 @@ document.addEventListener("DOMContentLoaded", () => {
   /* ===========================
      CONFIG
   ============================ */
-  const MASTER_PASSWORD = "1234";
+  const MASTER_PASSWORD = "Deepak123";
   const STORAGE_KEY = "data";
 
   /* ===========================
@@ -240,4 +240,5 @@ document.addEventListener("DOMContentLoaded", () => {
   Object.keys(data).forEach(c => customers.add(new Option(c, c)));
   render();
 });
+
 
