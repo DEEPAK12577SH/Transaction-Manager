@@ -14,7 +14,7 @@ body { background: #f0f4ff; padding: 20px; }
   text-align: center;
   color: #1e3a8a;
   margin-bottom: 25px;
-  font-size: 2em;
+  font-size: 1em;
   letter-spacing: 1px;
 }
 
@@ -145,3 +145,4 @@ ul#list::-webkit-scrollbar-track { background: #f0f4ff; }
   ul#list li { flex-direction: column; align-items: flex-start; }
   .modal-content { padding: 20px; }
 }
+
