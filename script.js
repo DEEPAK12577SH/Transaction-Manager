@@ -183,7 +183,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     doc.setFontSize(16);
     doc.setTextColor(37, 99, 235);
-    doc.text(`Transactions for ${c}`, 14, 20);
+    doc.text(`Transactions Statement for ${c}`, 14, 20);
 
     const filter = searchEl.value.toLowerCase();
     const txns = [...data[c]]
@@ -240,3 +240,4 @@ document.addEventListener("DOMContentLoaded", () => {
   Object.keys(data).forEach(c => customers.add(new Option(c, c)));
   render();
 });
+
